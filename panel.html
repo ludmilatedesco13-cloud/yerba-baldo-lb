@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YerbaBaldolb - Sistema de Gestión de Yerba Mate</title>
+    <link rel="stylesheet" href="css/estilos.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .btn-icon { font-size: 1.2rem; text-decoration: none; margin-right: 8px; display: inline-block; cursor: pointer; border: 0; background: transparent; }
+        .venta-tabla { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        .total-box { font-size: 1.3rem; font-weight: 600; color: var(--color-texto); text-align: right; margin-top: 10px; padding: 10px; background: #f4f1ea; border-radius: 8px; }
+        .stock-total-indicator { background: var(--color-tarjeta); border: 1px solid var(--borde-suave); border-radius: 12px; padding: 14px; }
+        .stock-total-indicator strong { display: block; color: var(--color-texto); font-size: 1.5rem; }
+        .summary-note, .summary-status { margin-top: 12px; color: var(--color-texto-suave); font-size: .82rem; }
+        .category-control { display: flex; gap: 8px; align-items: center; }
+        .category-control select { flex: 1; min-width: 0; }
+        .payment-details { min-height: 1.5em; margin: 0 0 12px; color: var(--color-texto-suave); }
+        .product-detail-image { display: block; width: min(100%, 240px); aspect-ratio: 1; object-fit: contain; margin: 0 auto 18px; border: 1px solid var(--borde-suave); border-radius: 12px; background: #f4f1ea; }
+    </style>
+</head>
+<body class="management-body">
+<header class="main-header">
+    <button type="button" id="btn-salir" class="btn-logout-pill" title="Cerrar Sesión">⏻ Salir</button>
+    <img src="img/yerba-baldo.jpg" alt="Logo Yerba Baldolb" class="logo-marca">
+    <h1>YerbaBaldolb🌿</h1>
+    <p style="color: var(--color-texto-suave); margin-top: 5px; font-size: 0.9rem;">¡Hola, <strong id="nombre-usuario">Usuario</strong>!</p>
+    <nav class="header-nav">
+        <a href="#sec-venta">🌿 Nueva Venta</a>
+        <a href="#sec-inventario">📦 Inventario</a>
+        <a href="#sec-metodos-pago">💳 Métodos de Pago</a>
+        <a class="admin-only" href="#sec-resumen">📈 Resumen</a>
+        <a class="admin-only" href="#sec-nuevo-producto">🧉 Nuevo Producto</a>
+        <a class="admin-only" href="#" id="btnReporte">📊 Reportes</a>
+        <a class="admin-only" href="usuarios.html">👥 Usuarios</a>
+    </nav>
+</header>
+
+<main class="container">
+    <!-- Resumen del Negocio -->
+    <section id="sec-resumen" class="card admin-only">
+        <div class="summary-header">
+            <h2>Resumen del Negocio 📈</h2>
+            <div class="summary-filters">
+                <div class="form-group">
+                    <label for="resumen-periodo">Período</label>
+                    <select id="resumen-periodo">
+                        <option value="day">Día</option>
+                        <option value="week">Semana</option>
+                        <option value="month" selected>Mes</option>
+                        <option value="year">Año</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="resumen-fecha">Fecha de referencia</label>
+                    <input type="date" id="resumen-fecha">
+                </div>
+            </div>
+        </div>
+        <div class="summary-metrics" aria-live="polite">
+            <article class="summary-metric"><p><span class="summary-metric-icon" aria-hidden="true">🧾</span>Ventas del período</p><strong id="total-ventas">0</strong></article>
+            <article class="summary-metric summary-metric--revenue"><p><span class="summary-metric-icon" aria-hidden="true">💵</span>Recaudado</p><strong id="caja-total">$0</strong></article>
+            <article class="summary-metric summary-metric--profit"><p><span class="summary-metric-icon" aria-hidden="true">📈</span>Ganancia bruta estimada</p><strong id="ganancia-total">$0</strong></article>
+            <article class="summary-metric"><p><span class="summary-metric-icon" aria-hidden="true">📦</span>Unidades vendidas</p><strong id="unidades-vendidas">0</strong></article>
+            <article class="summary-metric summary-metric--stock"><p><span class="summary-metric-icon" aria-hidden="true">⚠️</span>Productos sin stock (actual)</p><strong id="productos-sin-stock">0</strong></article>
+        </div>
+        <p id="estado-resumen" class="summary-status" role="status"></p>
+    </section>
+
+    <!-- Módulo de Ventas -->
+    <section id="sec-venta" class="card">
+        <h2>Registrar Nueva Venta 🌿</h2>
+        <form id="form-ventas-multiples">
+            <div class="row-agregar">
+                <div class="form-group" style="margin-bottom:0;">
+                    <label for="producto_buscar">Buscar Yerba / Producto</label>
+                    <input type="text" id="producto_buscar" list="lista_productos" placeholder="Ej: Yerba Baldo 1 kg" autocomplete="off">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label for="cantidad">Cantidad</label>
+                    <input type="number" id="cantidad" min="1" value="1">
+                </div>
+                <div>
+                    <button type="button" id="btn-agregar-item" class="btn-agregar-lista">Añadir</button>
+                </div>
+            </div>
+            <datalist id="lista_productos"></datalist>
+            <div class="form-group" id="selector-variante-venta" hidden>
+                <label for="variante-venta">Presentación / Formato disponible</label>
+                <select id="variante-venta">
+                    <option value="">Seleccioná una presentación</option>
+                </select>
+            </div>
+            <div class="table-responsive">
+                <table class="venta-tabla" id="tabla-carrito">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Presentación</th>
+                            <th>Tipo</th>
+                            <th>Precio Unitario</th>
+                            <th>Cantidad</th>
+                            <th>Total</th>
+                            <th>Quitar</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <fieldset class="payment-method-field">
+                <legend>Método de Pago</legend>
+                <div id="payment-method-options" class="payment-method-options" role="group" aria-label="Seleccioná un método de pago"></div>
+                <input type="hidden" id="metodo_pago" name="metodo_pago">
+            </fieldset>
+            <div id="detalle-calculo-pago" class="payment-details"></div>
+            <div class="total-box">Total Final: $<span id="monto-total-venta">0</span></div>
+            <button type="submit" class="btn-submit" style="margin-top:15px;">Finalizar y Registrar Venta</button>
+        </form>
+    </section>
+
+    <!-- Configuración de Métodos de Pago -->
+    <section id="sec-metodos-pago" class="card">
+        <h2>Configurar Métodos de Pago 💳</h2>
+        <form id="form-config-metodo-pago">
+            <div class="form-group-row">
+                <div class="form-group">
+                    <label for="metodo_pago_config">Método de Pago</label>
+                    <select id="metodo_pago_config" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="tipo_ajuste_config">Ajuste</label>
+                    <select id="tipo_ajuste_config">
+                        <option value="">Sin recargo ni descuento</option>
+                        <option value="descuento">Descuento (%)</option>
+                        <option value="recargo">Recargo (%)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="valor_ajuste_config">Porcentaje (%)</label>
+                    <input id="valor_ajuste_config" type="number" min="0" step="0.01" value="0" disabled>
+                </div>
+            </div>
+            <button type="submit" class="btn-submit">Guardar configuración</button>
+        </form>
+    </section>
+
+    <!-- Registrar Nuevo Producto (Yerba Baldo, Accesorios, etc.) -->
+    <section id="sec-nuevo-producto" class="card admin-only">
+        <h2>Registrar Nuevo Producto 🧉</h2>
+        <form id="form-nuevo-producto">
+            <div class="form-group-row">
+                <div class="form-group">
+                    <label for="nombre">Nombre del Producto</label>
+                    <input type="text" id="nombre" placeholder="Ej: Yerba Mate Baldo Clasica" required>
+                </div>
+                <div class="form-group">
+                    <label for="marca">Origen / Marca</label>
+                    <input type="text" id="marca" value="Baldo" placeholder="Ej: Baldo (Uruguay)">
+                </div>
+            </div>
+
+            <!-- Variantes de Presentación (reemplaza Talle/Color por Formato/Presentación) -->
+            <div class="card variant-editor">
+                <div class="variant-editor-header">
+                    <h3>Presentación y Stock 🌿</h3>
+                </div>
+                <div id="contenedor-variantes">
+                    <div class="form-group-row variante-row variant-row">
+                        <div class="form-group"><label>Presentación</label><input type="text" class="var-talle" placeholder="Ej: 1 kg" required></div>
+                        <div class="form-group"><label>Tipo de Paquete</label><input type="text" class="var-color" placeholder="Ej: Doypack / Papel" required></div>
+                        <div class="form-group"><label>Stock</label><input type="number" class="var-stock" min="0" step="1" required></div>
+                        <div class="variant-row-action">
+                            <button type="button" id="btn-agregar-variante" class="btn-add-dynamic" aria-label="Agregar presentación" title="Agregar presentación"><span aria-hidden="true">+</span></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group-row">
+                <div class="form-group">
+                    <label for="categoria">Categoría</label>
+                    <div class="category-control">
+                        <select id="categoria" required><option value="">-- Seleccionar --</option></select>
+                        <button type="button" id="btn-nueva-categoria" class="category-add-button" aria-label="Agregar categoría" title="Agregar categoría"><span aria-hidden="true">+</span></button>
+                        <button type="button" id="btn-eliminar-categoria" class="category-delete-button" aria-label="Eliminar categoría" title="Eliminar categoría">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="subcategoria">Subcategoría</label>
+                    <div class="category-control">
+                        <select id="subcategoria"><option value="">Sin subcategoría</option></select>
+                        <button type="button" id="btn-nueva-subcategoria" class="category-add-button" aria-label="Agregar subcategoría" title="Agregar subcategoría"><span aria-hidden="true">+</span></button>
+                        <button type="button" id="btn-eliminar-subcategoria" class="category-delete-button" aria-label="Eliminar subcategoría" title="Eliminar subcategoría">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group-row">
+                <div class="form-group"><label for="precio_costo">Precio Costo ($)</label><input type="text" id="precio_costo" required></div>
+                <div class="form-group"><label for="precio_venta">Precio Venta ($)</label><input type="text" id="precio_venta" required></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="caracteristicas">Descripción / Notas</label>
+                <textarea id="caracteristicas" rows="3" placeholder="Yerba mate con palo elaborada en Brasil..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="foto">Imagen del Producto</label>
+                <input type="file" id="foto" accept="image/jpeg,image/png,image/webp" multiple style="border:none;padding:5px 0;">
+                <p class="image-help">Subí hasta 5 imágenes JPG, PNG o WebP (máximo 5 MB cada una).</p>
+                <div id="contenedor-fotos-producto" class="product-photos-grid" hidden></div>
+            </div>
+
+            <button type="submit" class="btn-submit">Guardar Producto</button>
+        </form>
+    </section>
+
+    <!-- Inventario -->
+    <section id="sec-inventario" class="card">
+        <h2>Inventario Actual 📦</h2>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Origen</th>
+                        <th>Presentación</th>
+                        <th>Tipo</th>
+                        <th>Clasificación</th>
+                        <th>Precio Venta</th>
+                        <th>Stock</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-inventario"></tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<!-- Modal Detalles -->
+<div id="modal-detalles" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" id="btn-close-modal">&times;</span>
+        <img id="modal-foto-prod" class="product-detail-image" alt="">
+        <h2 id="modal-titulo-prod"></h2>
+        <p><strong>Marca:</strong> <span id="modal-marca-prod"></span></p>
+        <p><strong>Presentación:</strong> <span id="modal-talle-prod"></span></p>
+        <p><strong>Tipo:</strong> <span id="modal-color-prod"></span></p>
+        <p><strong>Precio Venta:</strong> $<span id="modal-precio-prod"></span></p>
+        <p><strong>Stock Total:</strong> <span id="modal-stock-prod"></span> u.</p>
+        <p id="modal-info-prod" style="margin-top:10px; background:#f4f1ea; padding:10px; border-radius:8px;"></p>
+    </div>
+</div>
+
+<div id="modalReporte" class="modal" role="dialog" aria-modal="true" aria-labelledby="titulo-reporte">
+    <section class="modal-content report-modal">
+        <button type="button" class="close-modal" id="cerrarModalReporte" aria-label="Cerrar reporte">&times;</button>
+        <h2 id="titulo-reporte">Reporte de ventas</h2>
+        <div class="report-filters">
+            <div class="form-group">
+                <label for="reporte-periodo">Período</label>
+                <select id="reporte-periodo">
+                    <option value="day">Día</option>
+                    <option value="week">Semana</option>
+                    <option value="month" selected>Mes</option>
+                    <option value="year">Año</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="reporte-fecha">Fecha de referencia</label>
+                <input type="date" id="reporte-fecha">
+            </div>
+        </div>
+        <div id="resultadoEstadisticas" aria-live="polite"></div>
+        <button type="button" id="btn-descargar-reporte" class="btn-submit">Descargar CSV</button>
+    </section>
+</div>
+
+<script type="module" src="js/neon-config.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

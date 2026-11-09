@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Producto - YerbaBaldolb</title>
+    <link rel="stylesheet" href="css/estilos.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { min-height: 100vh; padding: 30px 0 60px; }
+        .edit-container { max-width: 850px; margin: 0 auto; padding: 0 25px; }
+        .edit-header { display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap; margin-bottom: 20px; }
+        .edit-header h1 { color: var(--color-texto); font-size: 1.8rem; }
+        .back-link { color: var(--color-texto); font-weight: 600; text-decoration: none; background: var(--color-secundario); padding: 8px 15px; border-radius: 10px; }
+        .price-stock-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 14px; }
+        .category-control { display: flex; gap: 8px; align-items: center; }
+        .category-select { flex: 1; min-width: 0; }
+        .btn-delete-dynamic { background: #f7e9e4; color: var(--color-peligro); border: none; border-radius: 8px; width: 45px; height: 45px; flex: 0 0 45px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .btn-delete-dynamic:hover { background: #f1d8d0; }
+        .btn-delete-dynamic svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .variant-card { background: #f4f1ea; border: 1px dashed var(--color-primario); margin-bottom: 18px; padding: 15px; }
+        .variant-row { grid-template-columns: repeat(3, minmax(0, 1fr)) 45px; gap: 12px; align-items: end; margin-bottom: 12px; }
+        .variant-row .form-group { margin-bottom: 0; }
+        .variant-row-action { padding-left: 4px; }
+        .current-image { display: none; max-width: 180px; max-height: 180px; object-fit: contain; border-radius: 10px; margin-top: 10px; border: 1px solid var(--borde-suave); }
+        .image-help { color: var(--color-texto-suave); font-size: .82rem; margin-top: 5px; }
+        @media (max-width: 600px) {
+            .edit-container { padding: 0 15px; }
+            .edit-header h1 { font-size: 1.45rem; }
+            .edit-header { gap: 10px; }
+            .edit-header .back-link { padding: 8px 11px; font-size: 0.85rem; }
+            body { padding: 16px 0 28px; }
+            .variant-card { padding: 12px; }
+            .variant-row { grid-template-columns: minmax(0, 1fr); gap: 8px; margin: 0 0 12px; padding: 12px; border: 1px solid var(--borde-suave); border-radius: 10px; background: var(--color-tarjeta); }
+            .variant-row .form-group { margin: 0; }
+            .variant-row .form-group label { margin-bottom: 4px; font-size: 0.82rem; }
+            .variant-row .form-group input { height: 42px; }
+            .variant-row-action { grid-column: 1; justify-self: end; padding: 4px 0 0; }
+        }
+    </style>
+</head>
+<body class="management-body">
+<main class="edit-container">
+    <div class="edit-header">
+        <h1>Editar Producto ✏️</h1>
+        <a class="back-link" href="panel.html#sec-inventario">← Volver al Inventario</a>
+    </div>
+
+    <section class="card">
+        <form id="form-editar-producto">
+            <div class="form-group-row">
+                <div class="form-group">
+                    <label for="nombre">Nombre del Producto</label>
+                    <input type="text" id="nombre" required>
+                </div>
+                <div class="form-group">
+                    <label for="marca">Origen / Marca</label>
+                    <input type="text" id="marca">
+                </div>
+            </div>
+
+            <div class="card variant-card">
+                <h3 style="font-size:0.95rem;margin-bottom:12px;color:var(--color-texto);">Presentaciones y Stock 🌿</h3>
+                <p class="image-help">Podés definir varias presentaciones y sus stocks asociados.</p>
+                <div id="contenedor-variantes">
+                    <div class="form-group-row variante-row variant-row">
+                        <div class="form-group">
+                            <label>Presentación</label>
+                            <input type="text" class="var-talle" placeholder="Ej: 1 kg" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Tipo de Paquete</label>
+                            <input type="text" class="var-color" placeholder="Ej: Doypack" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Stock</label>
+                            <input type="number" class="var-stock" min="0" value="0" required>
+                        </div>
+                        <div class="variant-row-action">
+                            <button type="button" id="btn-agregar-variante" class="btn-add-dynamic" title="Agregar otra presentación" aria-label="Agregar otra presentación">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group-row">
+                <div class="form-group">
+                    <label for="categoria">Categoría</label>
+                    <div class="category-control">
+                        <select id="categoria" class="category-select" required>
+                            <option value="">-- Seleccionar Categoría --</option>
+                        </select>
+                        <button type="button" id="btn-nueva-categoria" class="btn-add-dynamic" title="Agregar Categoría" aria-label="Agregar Categoría">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+                        </button>
+                        <button type="button" id="btn-eliminar-categoria" class="btn-delete-dynamic" title="Eliminar Categoría" aria-label="Eliminar Categoría">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="subcategoria">Subcategoría</label>
+                    <div class="category-control">
+                        <select id="subcategoria" class="category-select">
+                            <option value="">Sin subcategoría</option>
+                        </select>
+                        <button type="button" id="btn-nueva-subcategoria" class="btn-add-dynamic" title="Agregar Subcategoría" aria-label="Agregar Subcategoría">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+                        </button>
+                        <button type="button" id="btn-eliminar-subcategoria" class="btn-delete-dynamic" title="Eliminar Subcategoría" aria-label="Eliminar Subcategoría">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group-row price-stock-row">
+                <div class="form-group">
+                    <label for="precio_costo">Precio Costo ($)</label>
+                    <input type="text" inputmode="decimal" id="precio_costo" required>
+                </div>
+                <div class="form-group">
+                    <label for="precio_venta">Precio Venta ($)</label>
+                    <input type="text" inputmode="decimal" id="precio_venta" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="caracteristicas">Descripción / Notas</label>
+                <textarea id="caracteristicas" rows="3"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="foto">Imagen del Producto</label>
+                <input type="file" id="foto" accept="image/jpeg,image/png,image/webp" multiple style="border:none;padding:5px 0;">
+                <p class="image-help">Subí imágenes del producto (máximo 5 MB cada una).</p>
+                <img id="vista-previa-foto" class="current-image" alt="Vista previa de la foto del producto">
+                <div id="contenedor-fotos-producto" class="product-photos-grid" hidden></div>
+            </div>
+
+            <button type="submit" class="btn-submit">Guardar Cambios</button>
+        </form>
+    </section>
+</main>
+
+<script type="module" src="js/neon-config.js"></script>
+<script type="module">
+    import { DEFAULT_IMAGE, setProductImage } from './js/image-utils.js';
+    import { crearGestorFotosProducto } from './js/product-photos.js';
+
+    const productId = new URLSearchParams(window.location.search).get('id');
+    let gestorFotosProducto = null;
+    let productoActual;
+    let variantesActuales = [];
+    let subcategoriasPorCategoria = {};
+
+    const parsePrice = value => {
+        const text = String(value ?? '').trim().replace(/\s/g, '');
+        if (!text) return NaN;
+        if (text.includes(',')) return Number(text.replace(/\./g, '').replace(',', '.'));
+        const parts = text.split('.');
+        return parts.length > 1 && parts.at(-1).length === 3 ? Number(parts.join('')) : Number(text);
+    };
+
+    const showError = message => Swal.fire({ icon: 'error', title: 'Atención', text: message, confirmButtonColor: '#5c723f' });
+    const showSuccess = (title, text) => Swal.fire({ icon: 'success', title, text, confirmButtonColor: '#5c723f' });
+
+    function actualizarSubcategorias(selectedValue = '') {
+        const select = document.getElementById('subcategoria');
+        select.innerHTML = '<option value="">-- Seleccionar Subcategoría --</option>';
+        (subcategoriasPorCategoria[document.getElementById('categoria').value] || []).forEach(nombre => {
+            select.add(new Option(nombre, nombre));
+        });
+        select.value = selectedValue;
+    }
+
+    async function cargarClasificaciones() {
+        const [categorias, subcategorias] = await Promise.all([
+            window.executeNeonQuery('SELECT * FROM categorias ORDER BY nombre'),
+            window.executeNeonQuery('SELECT * FROM subcategorias ORDER BY nombre')
+        ]);
+
+        const select = document.getElementById('categoria');
+        subcategoriasPorCategoria = {};
+        select.innerHTML = '<option value="">-- Seleccionar Categoría --</option>';
+        (categorias || []).forEach(categoria => {
+            select.add(new Option(categoria.nombre, categoria.nombre));
+            subcategoriasPorCategoria[categoria.nombre] = [];
+        });
+        (subcategorias || []).forEach(subcategoria => {
+            const categoria = (categorias || []).find(item => item.id === subcategoria.categoria_id)?.nombre;
+            if (categoria && subcategoriasPorCategoria[categoria]) subcategoriasPorCategoria[categoria].push(subcategoria.nombre);
+        });
+        select.value = productoActual.categoria || '';
+        actualizarSubcategorias(productoActual.subcategoria || '');
+    }
+
+    async function agregarCategoria() {
+        const { value } = await Swal.fire({ title: 'Nueva Categoría', input: 'text', inputPlaceholder: 'Nombre de la categoría...', showCancelButton: true, confirmButtonColor: '#5c723f', cancelButtonColor: '#a95c42', confirmButtonText: 'Guardar', cancelButtonText: 'Cancelar', inputValidator: value => !value.trim() ? 'Escribí un nombre.' : undefined });
+        if (!value) return;
+        try {
+            const nombre = value.trim();
+            await window.executeNeonQuery('INSERT INTO categorias (nombre) VALUES ($1)', [nombre]);
+            await cargarClasificaciones();
+            document.getElementById('categoria').value = nombre;
+            actualizarSubcategorias();
+        } catch (error) {
+            showError('No se pudo crear la categoría: ' + error.message);
+        }
+    }
+
+    async function agregarSubcategoria() {
+        const categoria = document.getElementById('categoria').value;
+        if (!categoria) return showError('Primero seleccioná una categoría.');
+        const { value } = await Swal.fire({ title: 'Nueva Subcategoría', input: 'text', inputPlaceholder: 'Nombre de la subcategoría...', showCancelButton: true, confirmButtonColor: '#5c723f', cancelButtonColor: '#a95c42', confirmButtonText: 'Guardar', cancelButtonText: 'Cancelar', inputValidator: value => !value.trim() ? 'Escribí un nombre.' : undefined });
+        if (!value) return;
+        
+        try {
+            const categoriaResult = await window.executeNeonQuery('SELECT id FROM categorias WHERE nombre = $1', [categoria]);
+            if (!categoriaResult.length) throw new Error('No se pudo encontrar la categoría.');
+
+            await window.executeNeonQuery('INSERT INTO subcategorias (categoria_id, nombre) VALUES ($1, $2)', [categoriaResult[0].id, value.trim()]);
+            await cargarClasificaciones();
+            document.getElementById('categoria').value = categoria;
+            actualizarSubcategorias(value.trim());
+        } catch (error) {
+            showError('No se pudo crear la subcategoría: ' + error.message);
+        }
+    }
+
+    async function eliminarClasificacion(tipo) {
+        const categoriaNombre = document.getElementById('categoria').value;
+        const subcategoriaNombre = document.getElementById('subcategoria').value;
+        const nombre = tipo === 'categoria' ? categoriaNombre : subcategoriaNombre;
+        if (!nombre || (tipo === 'subcategoria' && !categoriaNombre)) return showError('Seleccioná la clasificación que querés eliminar.');
+
+        const confirmacion = await Swal.fire({
+            title: `¿Eliminar ${tipo === 'categoria' ? 'categoría' : 'subcategoría'}?`,
+            text: `Se eliminará "${nombre}". Esta acción no se puede deshacer.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#a95c42',
+            cancelButtonColor: '#5c723f',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true
+        });
+        if (!confirmacion.isConfirmed) return;
+
+        try {
+            const categoria = await window.executeNeonQuery('SELECT id FROM categorias WHERE nombre = $1', [categoriaNombre]);
+            if (!categoria.length) throw new Error('Categoría no encontrada.');
+            
+            if (tipo === 'categoria') {
+                const subcategorias = await window.executeNeonQuery('SELECT id FROM subcategorias WHERE categoria_id = $1', [categoria[0].id]);
+                if (subcategorias.length) return showError('No se puede eliminar: primero eliminá sus subcategorías.');
+                
+                const productos = await window.executeNeonQuery('SELECT id FROM productos WHERE categoria = $1 LIMIT 1', [categoriaNombre]);
+                if (productos.length) return showError('No se puede eliminar: la categoría está siendo usada por un producto.');
+                
+                await window.executeNeonQuery('DELETE FROM categorias WHERE id = $1', [categoria[0].id]);
+            } else {
+                const subcategoria = await window.executeNeonQuery('SELECT id FROM subcategorias WHERE categoria_id = $1 AND nombre = $2', [categoria[0].id, subcategoriaNombre]);
+                if (!subcategoria.length) throw new Error('Subcategoría no encontrada.');
+                
+                const productos = await window.executeNeonQuery('SELECT id FROM productos WHERE categoria = $1 AND subcategoria = $2 LIMIT 1', [categoriaNombre, subcategoriaNombre]);
+                if (productos.length) return showError('No se puede eliminar: la subcategoría está siendo usada por un producto.');
+                
+                await window.executeNeonQuery('DELETE FROM subcategorias WHERE id = $1', [subcategoria[0].id]);
+            }
+            await cargarClasificaciones();
+            showSuccess('Eliminado', 'La clasificación fue eliminada correctamente.');
+        } catch (error) {
+            showError(`No se pudo eliminar: ${error.message}`);
+        }
+    }
+
+    function cargarFormulario() {
+        document.getElementById('nombre').value = productoActual.nombre || '';
+        document.getElementById('marca').value = productoActual.marca || '';
+        document.getElementById('precio_costo').value = productoActual.precio_costo ?? '';
+        document.getElementById('precio_venta').value = productoActual.precio_venta ?? '';
+        document.getElementById('caracteristicas').value = productoActual.caracteristicas || '';
+        const preview = document.getElementById('vista-previa-foto');
+        setProductImage(preview, productoActual.foto_url, productoActual.foto);
+        preview.style.display = 'block';
+    }
+
+    function crearFilaVariante(variant, esPrimera) {
+        const row = document.createElement('div');
+        row.className = 'form-group-row variante-row variant-row';
+        [
+            { label: 'Presentación', className: 'var-talle', value: variant.talle || '', placeholder: 'Ej: 1 kg', type: 'text' },
+            { label: 'Tipo de Paquete', className: 'var-color', value: variant.color || '', placeholder: 'Ej: Doypack', type: 'text' },
+            { label: 'Stock', className: 'var-stock', value: variant.stock ?? 0, placeholder: '', type: 'number' }
+        ].forEach(field => {
+            const group = document.createElement('div');
+            group.className = 'form-group';
+            const label = document.createElement('label');
+            label.textContent = field.label;
+            const input = document.createElement('input');
+            input.type = field.type;
+            input.className = field.className;
+            input.value = field.value;
+            input.placeholder = field.placeholder;
+            input.required = true;
+            if (field.type === 'number') input.min = '0';
+            group.append(label, input);
+            row.appendChild(group);
+        });
+
+        const action = document.createElement('div');
+        action.className = 'variant-row-action';
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = esPrimera ? 'btn-add-dynamic' : 'btn-delete-dynamic btn-eliminar-variante';
+        button.title = esPrimera ? 'Agregar otra presentación' : 'Quitar presentación';
+        button.setAttribute('aria-label', button.title);
+        button.innerHTML = esPrimera
+            ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>'
+            : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg>';
+        action.appendChild(button);
+        row.appendChild(action);
+        return row;
+    }
+
+    function renderizarVariantes(variantes) {
+        const contenedor = document.getElementById('contenedor-variantes');
+        contenedor.replaceChildren(...variantes.map((variant, index) => crearFilaVariante(variant, index === 0)));
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        if (!localStorage.getItem('usuario')) return window.location.replace('login.html');
+        if (String(localStorage.getItem('rol') || '').toLowerCase() !== 'admin') {
+            return window.location.replace('panel.html');
+        }
+        if (!productId) return showError('No se indicó qué producto editar.');
+        try {
+            await window.asegurarTablaVariantes();
+            await window.asegurarColumnaFotosVariantes();
+            const result = await window.executeNeonQuery('SELECT * FROM productos WHERE id = $1', [productId]);
+            if (!result.length) throw new Error('Producto no encontrado.');
+            productoActual = result[0];
+            const variantesCargadas = await window.executeNeonQuery(
+                'SELECT talle, color, stock FROM producto_variantes WHERE producto_id::text = $1 ORDER BY talle, color',
+                [String(productId)]
+            );
+            if (!variantesCargadas.length) {
+                variantesActuales = [{ talle: productoActual.talle || '', color: productoActual.color || '', stock: Number(productoActual.stock || 0) }];
+            } else {
+                const agrupadas = new Map();
+                variantesCargadas.forEach(variant => {
+                    const key = `${variant.talle || ''}\u0000${variant.color || ''}`;
+                    const existing = agrupadas.get(key);
+                    if (existing) existing.stock += Number(variant.stock || 0);
+                    else agrupadas.set(key, { ...variant, stock: Number(variant.stock || 0) });
+                });
+                variantesActuales = [...agrupadas.values()];
+            }
+            cargarFormulario();
+            renderizarVariantes(variantesActuales);
+            gestorFotosProducto = crearGestorFotosProducto({
+                input: document.getElementById('foto'),
+                contenedor: document.getElementById('contenedor-fotos-producto'),
+                onError: message => showError(message)
+            });
+            gestorFotosProducto.setColors(variantesActuales.map(variant => variant.color));
+            gestorFotosProducto.setPhotos(productoActual.fotos_variantes);
+            await cargarClasificaciones();
+        } catch (error) {
+            showError('No se pudo cargar el producto: ' + error.message);
+        }
+
+        document.getElementById('categoria').addEventListener('change', () => actualizarSubcategorias());
+        document.getElementById('btn-nueva-categoria').addEventListener('click', agregarCategoria);
+        document.getElementById('btn-nueva-subcategoria').addEventListener('click', agregarSubcategoria);
+        document.getElementById('btn-eliminar-categoria').addEventListener('click', () => eliminarClasificacion('categoria'));
+        document.getElementById('btn-eliminar-subcategoria').addEventListener('click', () => eliminarClasificacion('subcategoria'));
+        document.getElementById('contenedor-variantes').addEventListener('click', event => {
+            if (event.target.closest('.variant-row-action .btn-add-dynamic')) {
+                document.getElementById('contenedor-variantes').appendChild(crearFilaVariante({ stock: 0 }, false));
+            } else if (event.target.closest('.btn-eliminar-variante')) {
+                event.target.closest('.variante-row').remove();
+            }
+        });
+        document.getElementById('contenedor-variantes').addEventListener('input', event => {
+            if (event.target.matches('.var-color')) {
+                gestorFotosProducto?.setColors([...document.querySelectorAll('.variante-row .var-color')]
+                    .map(input => input.value.trim()));
+            }
+        });
+
+        document.getElementById('form-editar-producto').addEventListener('submit', async event => {
+            event.preventDefault();
+            try {
+                const precioCosto = parsePrice(document.getElementById('precio_costo').value);
+                const precioVenta = parsePrice(document.getElementById('precio_venta').value);
+                
+                if (!document.getElementById('nombre').value.trim() || !Number.isFinite(precioCosto) || precioCosto <= 0 || !Number.isFinite(precioVenta) || precioVenta <= 0) {
+                    throw new Error('Completá los datos obligatorios con valores válidos.');
+                }
+
+                const filasVariantes = [...document.querySelectorAll('.variante-row')];
+                const variantes = filasVariantes.map(row => ({
+                    talle: row.querySelector('.var-talle').value.trim(),
+                    color: row.querySelector('.var-color').value.trim(),
+                    stock: Number(row.querySelector('.var-stock').value)
+                }));
+                if (!variantes.length || variantes.some(variant =>
+                    !variant.talle || !variant.color || !Number.isInteger(variant.stock) || variant.stock < 0
+                )) {
+                    throw new Error('Completá cada presentación con tipo de paquete y un stock entero igual o mayor a cero.');
+                }
+                const combinaciones = new Set(variantes.map(variant => `${variant.talle.toLocaleLowerCase()}\u0000${variant.color.toLocaleLowerCase()}`));
+                if (combinaciones.size !== variantes.length) {
+                    throw new Error('No repitas la misma combinación de presentación y tipo.');
+                }
+                const fotosVariantes = gestorFotosProducto?.getPhotos() || [];
+                const coloresDisponibles = new Set(variantes.map(variant => variant.color.toLocaleLowerCase()));
+                if (fotosVariantes.some(photo => !photo.color || !coloresDisponibles.has(photo.color.toLocaleLowerCase()))) {
+                    throw new Error('Asigná a cada foto un tipo que esté cargado en las variantes del producto.');
+                }
+                const stock = variantes.reduce((total, variant) => total + variant.stock, 0);
+                const nombre = document.getElementById('nombre').value.trim();
+                const marca = document.getElementById('marca').value.trim();
+                const categoria = document.getElementById('categoria').value;
+                const subcategoria = document.getElementById('subcategoria').value;
+                const caracteristicas = document.getElementById('caracteristicas').value.trim();
+
+                const foto_url = fotosVariantes[0]?.image || productoActual.foto_url || productoActual.foto || DEFAULT_IMAGE;
+
+                await window.executeNeonQuery(
+                    `WITH producto AS (
+                        UPDATE productos
+                        SET nombre = $1, marca = $2, talle = $3, color = $4, categoria = $5,
+                            subcategoria = $6, precio_costo = $7, precio_venta = $8, stock = $9,
+                            caracteristicas = $10, foto_url = $11, fotos_variantes = $12::jsonb
+                        WHERE id = $13
+                        RETURNING id
+                    ),
+                    variantes_borradas AS (
+                        DELETE FROM producto_variantes v
+                        USING producto p
+                        WHERE v.producto_id::text = p.id::text
+                        RETURNING v.producto_id
+                    ),
+                    variantes_insertadas AS (
+                        INSERT INTO producto_variantes (producto_id, articulo, talle, color, stock)
+                        SELECT p.id::text, p.id::text, variante.talle, variante.color, variante.stock
+                        FROM producto p
+                        CROSS JOIN (SELECT COUNT(*) FROM variantes_borradas) AS borradas
+                        CROSS JOIN jsonb_to_recordset($14::jsonb) AS variante(
+                            talle TEXT, color TEXT, stock INTEGER
+                        )
+                        RETURNING producto_id
+                    )
+                    SELECT id FROM producto`,
+                    [
+                        nombre, marca, variantes[0].talle, variantes[0].color, categoria,
+                        subcategoria, precioCosto, precioVenta, stock, caracteristicas, foto_url,
+                        JSON.stringify(fotosVariantes), productId, JSON.stringify(variantes)
+                    ]
+                );
+
+                await showSuccess('¡Producto actualizado!', 'Los cambios se guardaron correctamente.');
+                window.location.href = 'panel.html#sec-inventario';
+            } catch (error) {
+                showError('No se pudo actualizar el producto: ' + error.message);
+            }
+        });
+    });
+</script>
+</body>
+</html>

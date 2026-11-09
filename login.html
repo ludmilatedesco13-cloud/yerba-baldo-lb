@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - yerbabaldolb</title>
+    <link rel="stylesheet" href="css/estilos.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        .login-card { width: 100%; max-width: 460px; padding: 40px; text-align: center; }
+        .logo-marca { max-width: 120px; height: 120px; object-fit: cover; margin-bottom: 20px; border-radius: 50%; border: 2px solid var(--color-primario); }
+        .password-container { position: relative; display: flex; align-items: center; }
+        .password-container input { width: 100%; padding-right: 40px; }
+        .toggle-password { position: absolute; right: 12px; background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; color: #666; }
+        .toggle-password svg { width: 22px; height: 22px; fill: currentColor; }
+    </style>
+</head>
+<body class="management-body">
+
+<main class="card login-card">
+    <img src="img/yerba-baldo.jpg" alt="Logo YerbaBaldolb" class="logo-marca">
+    <h2 style="margin-bottom: 20px; border:none;">YerbaBaldolb 🌿</h2>
+    
+    <form id="form-login" style="text-align: left;">
+        <div class="form-group">
+            <label for="usuario">Usuario</label>
+            <input id="usuario" type="text" autocomplete="username" required autofocus>
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Contraseña</label>
+            <div class="password-container">
+                <input id="password" type="password" autocomplete="current-password" required>
+                <button type="button" id="btn-toggle-pass" class="toggle-password" title="Ver contraseña">
+                    <svg id="icono-ojo" viewBox="0 0 24 24">
+                        <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <button type="submit" class="btn-submit" style="margin-top:10px;">Ingresar</button>
+    </form>
+</main>
+
+<script type="module" src="js/neon-config.js"></script>
+<script type="module">
+    const inputPassword = document.getElementById('password');
+    const btnTogglePass = document.getElementById('btn-toggle-pass');
+    const iconoOjo = document.getElementById('icono-ojo');
+
+    btnTogglePass.addEventListener('click', () => {
+        if (inputPassword.type === 'password') {
+            inputPassword.type = 'text';
+            iconoOjo.innerHTML = '<path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2z"/>';
+        } else {
+            inputPassword.type = 'password';
+            iconoOjo.innerHTML = '<path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3 z"/>';
+        }
+    });
+
+    document.getElementById('form-login').addEventListener('submit', async event => {
+        event.preventDefault();
+        const usuarioIngresado = document.getElementById('usuario').value.trim();
+        const passwordIngresada = document.getElementById('password').value;
+        
+        try {
+            const data = await window.executeNeonQuery('SELECT * FROM usuario WHERE usuario = $1', [usuarioIngresado]);
+            if (!data || data.length === 0 || String(data[0].password) !== passwordIngresada) {
+                Swal.fire({ icon: 'error', title: 'Acceso denegado', text: 'Usuario o contraseña incorrectos.', confirmButtonColor: '#5c723f' });
+                return;
+            }
+            const user = data[0];
+            const rol = String(user.rol || '').toLowerCase();
+            if (!['admin', 'vendedor'].includes(rol)) {
+                Swal.fire({ icon: 'error', title: 'Acceso denegado', text: 'La cuenta no tiene un rol válido.', confirmButtonColor: '#5c723f' });
+                return;
+            }
+            localStorage.setItem('usuario', user.usuario);
+            localStorage.setItem('rol', rol);
+            localStorage.setItem('usuario_id', user.id);
+            window.location.href = 'panel.html';
+        } catch (error) {
+            Swal.fire({ icon: 'error', title: 'Error', text: error.message, confirmButtonColor: '#5c723f' });
+        }
+    });
+</script>
+</body>
+</html>

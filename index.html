@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="0; url=login.html">
+    <title>YerbaBaldolb 🌿</title>
+    <link rel="stylesheet" href="css/estilos.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background: #f4f1ea;
+        }
+
+        .index-card {
+            width: min(100% - 40px, 460px);
+            padding: 40px;
+            text-align: center;
+        }
+
+        .index-card img {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 2px solid #5c723f;
+            margin-bottom: 20px;
+        }
+
+        .index-card a {
+            display: inline-block;
+            margin-top: 10px;
+            color: #5c723f;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <main class="card index-card">
+        <img src="img/yerba-baldo.jpg" alt="Logo YerbaBaldolb" >
+        <h1>YerbaBaldolb 🌿</h1>
+        <p>Redirigiendo al inicio de sesión...</p>
+        <a href="login.html">Ingresar manualmente</a>
+    </main>
+
+    <script>
+        window.location.replace('login.html');
+    </script>
+</body>
+</html>
