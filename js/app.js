@@ -812,7 +812,7 @@ async function registrarVenta() {
         }
 
         carritoVenta = []; 
-        if (selectMetodo) selectMetodo.value = '';
+        if (inputMetodo) inputMetodo.value = '';
         actualizarTablaCarrito(); 
         await Promise.all([cargarProductos(), cargarResumen()]); 
         showSuccess('¡Venta Registrada! 🌿', 'La operación fue exitosa y el stock ha sido actualizado.'); 
@@ -942,7 +942,7 @@ async function eliminarProducto(id) {
             ),
             eliminado AS (
                 DELETE FROM productos
-                WHERE id = $1 AND (SELECT COUNT(*) FROM variantes) >= 0
+                WHERE id::text = $1::text AND (SELECT COUNT(*) FROM variantes) >= 0
                 RETURNING id
             )
             SELECT id FROM eliminado`,
